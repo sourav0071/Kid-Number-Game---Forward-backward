@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Before & After Number Game</title>
+  <style>
+    :root {
+      --bg: #fff7e6;
+      --card: #ffffff;
+      --accent: #ff9800;
+      --correct: #4caf50;
+      --wrong: #f44336;
+      --muted: #666;
+    }
+    body {
+      margin: 0;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 500px;
+      background: var(--card);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      color: var(--accent);
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    select {
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    .question {
+      font-size: 2rem;
+      margin: 20px 0;
+      color: #333;
+      font-weight: bold;
+    }
+    input {
+      font-size: 1.5rem;
+      text-align: center;
+      padding: 8px;
+      width: 80px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: white;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .feedback {
+      margin-top: 15px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      min-height: 30px;
+    }
+    .feedback.correct {
+      color: var(--correct);
+    }
+    .feedback.wrong {
+      color: var(--wrong);
+    }
+    .score {
+      margin-top: 10px;
+      font-size: 1.1rem;
+      color: var(--muted);
+    }
+    @media(max-width: 500px) {
+      .question { font-size: 1.6rem; }
+      input { width: 60px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Before & After Number Game</h1>
+
+    <div class="controls">
+      <label>Mode:
+        <select id="mode">
+          <option value="both">Both</option>
+          <option value="after">After Only</option>
+          <option value="before">Before Only</option>
+        </select>
+      </label>
+      <label>Questions:
+        <select id="questionCount">
+          <option value="10">10</option>
+          <option value="20">20</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="question" id="question">Click Start!</div>
+    <input type="number" id="answer" placeholder="?" />
+    <br>
+    <button id="checkBtn" disabled>Check</button>
+    <div class="feedback" id="feedback"></div>
+    <div class="score" id="score">Score: 0 | Q: 0/0</div>
+    <br>
+    <button id="nextBtn" disabled>Start</button>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question');
+    const answerEl = document.getElementById('answer');
+    const feedbackEl = document.getElementById('feedback');
+    const scoreEl = document.getElementById('score');
+    const checkBtn = document.getElementById('checkBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const modeSelect = document.getElementById('mode');
+    const questionCountSelect = document.getElementById('questionCount');
+
+    let currentNumber = 0;
+    let mode = "after";
+    let score = 0;
+    let questionCount = 10;
+    let currentQuestion = 0;
+
+    function getRandomNumber() {
+      return Math.floor(Math.random() * 20); // 0-19
+    }
+
+    function chooseMode() {
+      const selectedMode = modeSelect.value;
+      if (selectedMode === 'both') {
+        return Math.random() < 0.5 ? 'after' : 'before';
+      }
+      return selectedMode;
+    }
+
+    function newQuestion() {
+      currentNumber = getRandomNumber();
+      mode = chooseMode();
+      questionEl.textContent = mode === 'after' ? `What comes after ${currentNumber}?` : `What comes before ${currentNumber}?`;
+      answerEl.value = '';
+      feedbackEl.textContent = '';
+      checkBtn.disabled = true;
+      nextBtn.disabled = true;
+      currentQuestion++;
+      scoreEl.textContent = `Score: ${score} | Q: ${currentQuestion}/${questionCount}`;
+      answerEl.focus();
+    }
+
+    function checkAnswer() {
+      const userAnswer = parseInt(answerEl.value, 10);
+      const correctAnswer = mode === 'after' ? currentNumber + 1 : currentNumber - 1;
+
+      if (userAnswer === correctAnswer) {
+        feedbackEl.textContent = '✅ Correct!';
+        feedbackEl.className = 'feedback correct';
+        score++;
+      } else {
+        feedbackEl.textContent = `❌ Oops! Answer is ${correctAnswer}`;
+        feedbackEl.className = 'feedback wrong';
+        score = Math.max(0, score - 1);
+      }
+      scoreEl.textContent = `Score: ${score} | Q: ${currentQuestion}/${questionCount}`;
+      nextBtn.disabled = currentQuestion >= questionCount;
+      checkBtn.disabled = true;
+    }
+
+    function startGame() {
+      score = 0;
+      currentQuestion = 0;
+      questionCount = parseInt(questionCountSelect.value, 10);
+      nextBtn.textContent = 'Next';
+      nextBtn.disabled = true;
+      newQuestion();
+    }
+
+    checkBtn.addEventListener('click', () => {
+      checkAnswer();
+      nextBtn.disabled = currentQuestion >= questionCount ? true : false;
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentQuestion < questionCount) {
+        newQuestion();
+      } else {
+        questionEl.textContent = `Game Over! Final Score: ${score}/${questionCount}`;
+        nextBtn.disabled = true;
+      }
+    });
+
+    answerEl.addEventListener('input', () => {
+      checkBtn.disabled = answerEl.value.trim() === '';
+    });
+
+    questionCountSelect.addEventListener('change', () => {
+      questionCount = parseInt(questionCountSelect.value, 10);
+    });
+
+    // start button functionality
+    nextBtn.textContent = 'Start';
+    nextBtn.disabled = false;
+    nextBtn.addEventListener('click', startGame, { once: true });
+  </script>
+</body>
+</html>
